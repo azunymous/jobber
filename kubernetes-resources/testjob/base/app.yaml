@@ -14,7 +14,7 @@ spec:
           image: busybox
           command:
             - sleep
-            - "30"
+            - "10"
           imagePullPolicy: IfNotPresent
         - name: jobber
           image: jobber

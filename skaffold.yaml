@@ -8,8 +8,14 @@ build:
         dependencies:
           paths:
             - .
-deploy:
-  kustomize:
-    paths:    #  	path to Kustomization files.
-      - ./kubernetes-resources/testjob    #
-  kubeContext: kind-kind
+profiles:
+  - name: pass
+    deploy:
+      kustomize:
+        paths:
+          - ./kubernetes-resources/testjob/base
+  - name: fail
+    deploy:
+      kustomize:
+        paths:
+          - ./kubernetes-resources/testjob/fail
