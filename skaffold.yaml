@@ -1,0 +1,15 @@
+apiVersion: skaffold/v2beta4
+kind: Config
+build:
+  artifacts:
+    - image: jobber
+      custom:
+        buildCommand: ./build.sh
+        dependencies:
+          paths:
+            - .
+deploy:
+  kustomize:
+    paths:    #  	path to Kustomization files.
+      - ./kubernetes-resources/testjob    #
+  kubeContext: kind-kind
