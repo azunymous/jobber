@@ -3,6 +3,7 @@ kind: Kustomization
 
 resources:
   - ../base
+  - ../../minio/base
 
 patchesStrategicMerge:
   - upload-patch.yaml

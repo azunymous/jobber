@@ -52,28 +52,44 @@ This is so it can monitor the state of the main container in the pod.
 
 func monitor(logger *zap.Logger, containerOpts *options.Container) error {
 	logger.Info("Starting monitor of job container " + containerOpts.Name)
+	podName := os.Getenv("POD_NAME")
+	namespaceName := os.Getenv("NAMESPACE_NAME")
+
 	c, err := rest.InClusterConfig()
 	if err != nil {
 		return err
 	}
 	clientset := kubernetes.NewForConfigOrDie(c)
 	w := watch.NewContainerWatcher(clientset, logger)
-	err = w.Watch(containerOpts.Name, os.Getenv("POD_NAME"), os.Getenv("NAMESPACE_NAME"))
+	err = w.Watch(containerOpts.Name, podName, namespaceName)
 	if err != nil {
 		return fmt.Errorf("watch error: %v", err)
 	}
 
-	logger.Sugar().Debugf("Starting file uploads %v", containerOpts.UploadFile)
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
-	defer cancel()
-	g, ctx := errgroup.WithContext(ctx)
-	for _, f := range containerOpts.UploadFile {
-		// Pass the current value into the goroutine closure rather than the variable
-		f := f
-		g.Go(func() error {
-			logger.Info("Uploading file", zap.String("file", f))
-			return uploader.Upload(logger, f)
-		})
+	if len(containerOpts.UploadFile) > 0 {
+		logger.Sugar().Debugf("Starting file uploads %v", containerOpts.UploadFile)
+		u := uploader.NewUploaderOrDie(uploader.Config{
+			Endpoint:  os.Getenv("JOBBER_ENDPOINT"),
+			AccessKey: os.Getenv("JOBBER_ACCESS_KEY"),
+			SecretKey: os.Getenv("JOBBER_SECRET_KEY"),
+		}, logger)
+		err = u.Initialize(containerOpts.Name)
+		if err != nil {
+			return err
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+		defer cancel()
+		g, ctx := errgroup.WithContext(ctx)
+		for _, f := range containerOpts.UploadFile {
+			// Pass the current value into the goroutine closure rather than the variable
+			f := f
+			g.Go(func() error {
+				logger.Info("Uploading file", zap.String("file", f))
+				return u.Upload(containerOpts.Name, podName, f)
+			})
+		}
+		return g.Wait()
 	}
-	return g.Wait()
+	return nil
 }

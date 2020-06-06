@@ -21,6 +21,13 @@ spec:
             - /data/testfile2.txt
             - -v
             - "1"
+          env:
+            - name: JOBBER_ENDPOINT
+              value: "minio:9000"
+            - name: JOBBER_ACCESS_KEY
+              value: minio
+            - name: JOBBER_SECRET_KEY
+              value: insecure
           volumeMounts:
             - mountPath: /data
               name: data
