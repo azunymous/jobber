@@ -3,13 +3,19 @@ package uploader
 import (
 	"github.com/minio/minio-go/v6"
 	"go.uber.org/zap"
+	"io"
 	"os"
 	"path/filepath"
 )
 
 type Uploader struct {
-	client *minio.Client
+	client ObjectStorage
 	logger *zap.Logger
+}
+
+type ObjectStorage interface {
+	PutObject(bucketName, objectName string, reader io.Reader, objectSize int64, opts minio.PutObjectOptions) (int64, error)
+	MakeBucket(bucketName string, location string) error
 }
 
 func NewUploaderOrDie(config Config, logger *zap.Logger) *Uploader {

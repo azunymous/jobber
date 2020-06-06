@@ -10,11 +10,11 @@ import (
 )
 
 type containerWatcher struct {
-	clientset *kubernetes.Clientset
+	clientset kubernetes.Interface
 	logger    *zap.Logger
 }
 
-func NewContainerWatcher(clientset *kubernetes.Clientset, logger *zap.Logger) *containerWatcher {
+func NewContainerWatcher(clientset kubernetes.Interface, logger *zap.Logger) *containerWatcher {
 	return &containerWatcher{clientset: clientset, logger: logger}
 }
 
