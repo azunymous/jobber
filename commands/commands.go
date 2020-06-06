@@ -8,5 +8,5 @@ import (
 // Add commands all the commands to a top level command.
 func AddCommands(topLevel *cobra.Command) {
 	addMonitor(topLevel)
-
+	addInject(topLevel)
 }

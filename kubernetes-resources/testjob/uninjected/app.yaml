@@ -1,0 +1,19 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: testjob
+  labels:
+    app: testapp
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      serviceAccountName: monitoring
+      containers:
+        - name: testjob
+          image: busybox
+          command:
+            - sleep
+            - "10"
+          imagePullPolicy: IfNotPresent
+      restartPolicy: Never
