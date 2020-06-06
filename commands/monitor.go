@@ -1,13 +1,18 @@
 package commands
 
 import (
+	"context"
+	"fmt"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 	"jobber/commands/options"
+	"jobber/uploader"
 	"jobber/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"os"
+	"time"
 )
 
 // addRelease adds the increment command to a top level command.
@@ -17,7 +22,15 @@ func addMonitor(topLevel *cobra.Command) {
 	monitor := &cobra.Command{
 		Use:   "monitor",
 		Short: "Start monitoring a container",
-		Long: `Monitor container. This should be run as a sidecar
+		Long: `Monitor a container. This should be run as a sidecar in a Job.
+
+This command expects the environment variables 'POD_NAME' and 'NAMESPACE_NAME' to be set via 
+the Kubernetes downward API. A service account token with the ability to read pods in this namespace
+is also required.
+
+This is so it can monitor the state of the main container in the pod.
+
+(Note: This access is required until Kubernetes supports the sidecar container lifecycle)
 `,
 		Run: func(cmd *cobra.Command, args []string) {
 			logger, _ := zap.NewProduction()
@@ -27,12 +40,13 @@ func addMonitor(topLevel *cobra.Command) {
 			err := monitor(logger, containerOpts)
 			logger.Info("Monitor complete")
 			if err != nil {
-				logger.Fatal("Failed", zap.Error(err))
+				logger.Fatal("Monitor failed", zap.Error(err))
 			}
 		},
 	}
 	options.AddVerbosityArg(monitor, globalOpts)
 	options.AddNameArg(monitor, containerOpts)
+	options.AddCopyFolderArg(monitor, containerOpts)
 	topLevel.AddCommand(monitor)
 }
 
@@ -44,5 +58,22 @@ func monitor(logger *zap.Logger, containerOpts *options.Container) error {
 	}
 	clientset := kubernetes.NewForConfigOrDie(c)
 	w := watch.NewContainerWatcher(clientset, logger)
-	return w.Watch(containerOpts.Name, os.Getenv("POD_NAME"), os.Getenv("NAMESPACE_NAME"))
+	err = w.Watch(containerOpts.Name, os.Getenv("POD_NAME"), os.Getenv("NAMESPACE_NAME"))
+	if err != nil {
+		return fmt.Errorf("watch error: %v", err)
+	}
+
+	logger.Sugar().Debugf("Starting file uploads %v", containerOpts.UploadFile)
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cancel()
+	g, ctx := errgroup.WithContext(ctx)
+	for _, f := range containerOpts.UploadFile {
+		// Pass the current value into the goroutine closure rather than the variable
+		f := f
+		g.Go(func() error {
+			logger.Info("Uploading file", zap.String("file", f))
+			return uploader.Upload(logger, f)
+		})
+	}
+	return g.Wait()
 }

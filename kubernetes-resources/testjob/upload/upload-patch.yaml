@@ -1,0 +1,41 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: testjob
+  labels:
+    app: testapp
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      serviceAccountName: monitoring
+      containers:
+        - name: jobber
+          args:
+            - monitor
+            - -n
+            - testjob
+            - -u
+            - /data/testfile.txt
+            - -u
+            - /data/testfile2.txt
+            - -v
+            - "1"
+          volumeMounts:
+            - mountPath: /data
+              name: data
+        - name: testjob
+          image: busybox
+          command:
+            - sh
+          args:
+            - -c
+            - |
+              echo "content" > /data/testfile.txt
+              sleep 10 && echo "more content" > /data/testfile2.txt && exit 1
+          volumeMounts:
+            - mountPath: /data
+              name: data
+      volumes:
+        - name: data
+          emptyDir: {}

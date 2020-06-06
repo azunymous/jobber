@@ -11,7 +11,7 @@ import (
 
 type containerWatcher struct {
 	clientset *kubernetes.Clientset
-	logger *zap.Logger
+	logger    *zap.Logger
 }
 
 func NewContainerWatcher(clientset *kubernetes.Clientset, logger *zap.Logger) *containerWatcher {
@@ -19,7 +19,8 @@ func NewContainerWatcher(clientset *kubernetes.Clientset, logger *zap.Logger) *c
 }
 
 func (c *containerWatcher) Watch(name, pod, namespace string) error {
-	c.logger = c.logger.With(zap.String("container", name), zap.String("pod", pod), zap.String("namespace", namespace))
+	c.logger = c.logger.
+		With(zap.String("container", name), zap.String("pod", pod), zap.String("namespace", namespace))
 	c.logger.Info("Starting watch")
 
 	c.logger.Debug("Getting pod resource")
@@ -42,7 +43,7 @@ func (c *containerWatcher) Watch(name, pod, namespace string) error {
 	}
 	defer watch.Stop()
 	for event := range watch.ResultChan() {
-		c.logger.Info("Event received" , zap.String("event", string(event.Type)))
+		c.logger.Info("Event received", zap.String("event", string(event.Type)))
 		p := event.Object.(*core.Pod)
 		status, terminated, err := checkIfTerminated(name, p.Status.ContainerStatuses)
 		if err != nil {
