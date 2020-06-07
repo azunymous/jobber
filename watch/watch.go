@@ -18,6 +18,7 @@ func NewContainerWatcher(clientset kubernetes.Interface, logger *zap.Logger) *co
 	return &containerWatcher{clientset: clientset, logger: logger}
 }
 
+// Watch watches a given container in a pod and namespace and exits when that container exits
 func (c *containerWatcher) Watch(name, pod, namespace string) error {
 	c.logger = c.logger.
 		With(zap.String("container", name), zap.String("pod", pod), zap.String("namespace", namespace))

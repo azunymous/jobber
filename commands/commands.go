@@ -9,4 +9,5 @@ import (
 func AddCommands(topLevel *cobra.Command) {
 	addMonitor(topLevel)
 	addInject(topLevel)
+	addWait(topLevel)
 }

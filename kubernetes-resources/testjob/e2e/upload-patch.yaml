@@ -1,0 +1,47 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: testjob
+  labels:
+    app: testapp
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      serviceAccountName: monitoring
+      containers:
+        - name: testjob
+          image: busybox
+          command:
+            - sh
+          args:
+            - -c
+            - |
+              echo "hello world"
+              sleep 10 && echo "expected-log-message" && echo "content" > /data/testfile.txt
+              exit 0
+          volumeMounts:
+            - mountPath: /data
+              name: data
+        - name: jobber
+          args:
+            - monitor
+            - -n
+            - testjob
+            - -u
+            - /data/testfile.txt
+            - -v
+            - "1"
+          env:
+            - name: JOBBER_ENDPOINT
+              value: "minio:9000"
+            - name: JOBBER_ACCESS_KEY
+              value: minio
+            - name: JOBBER_SECRET_KEY
+              value: insecure
+          volumeMounts:
+            - mountPath: /data
+              name: data
+      volumes:
+        - name: data
+          emptyDir: {}

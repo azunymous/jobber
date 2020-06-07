@@ -103,6 +103,3 @@ spec:
       restartPolicy: Never
 ```
 
-## TODO
-- [ ] Create a 'wait'-like command that watches a Job, streams its logs
-and then downloads all the files from the Job.
