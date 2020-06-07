@@ -24,10 +24,12 @@ func addMonitor(topLevel *cobra.Command) {
 		Short: "Start monitoring a container",
 		Long: `Monitor a container. This should be run as a sidecar in a Job.
 
-This command expects the environment variables 'POD_NAME' and 'NAMESPACE_NAME' to be set via 
-the Kubernetes downward API. A service account token with the ability to read pods in this namespace
-is also required.
+This command expects the environment variables:
+- 'POD_NAME' and 'NAMESPACE_NAME' to be set via the Kubernetes downward API. 
+- 'JOBBER_ENDPOINT', 'JOBBER_ACCESS_KEY' and 'JOBBER_SECRET_KEY' for configuring uploading files 
+to a S3 compatible storage service if '--upload-file' flags are used.
 
+A service account token with the ability to read pods in this namespace is also required.
 This is so it can monitor the state of the main container in the pod.
 
 (Note: This access is required until Kubernetes supports the sidecar container lifecycle)

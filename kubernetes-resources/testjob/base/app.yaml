@@ -25,8 +25,6 @@ spec:
             - -v
             - "1"
           env:
-            - name: JOB_NAME
-              value: testjob
             - name: POD_NAME
               valueFrom:
                 fieldRef:
