@@ -2,7 +2,7 @@
 set -e
 
 if ! [ -x "$(command -v ko)" ]; then
-    GO111MODULE=on go get -mod=readonly github.com/google/ko/cmd/ko@v0.5.0
+    GO111MODULE=on go get -mod=readonly github.com/google/ko/cmd/ko@v0.5.1
 fi
 
 output=$(ko publish --local --tags= ./cmd/jobber | tee)

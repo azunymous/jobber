@@ -97,6 +97,27 @@ func (c *containerWatcher) Wait(w io.Writer, job, namespace string) error {
 		}
 	})
 
+	g.Go(func() error {
+		select {
+		case <-ctx.Done():
+			time.Sleep(1 * time.Second)
+			return nil
+		default:
+			for {
+				j, err := c.clientset.BatchV1().Jobs(namespace).Get(job, meta.GetOptions{})
+				if err != nil {
+					return err
+				}
+				if j.Status.Failed > 0 {
+					return errors.New("job failed")
+				}
+				if j.Status.Succeeded > 0 {
+					return nil
+				}
+			}
+		}
+	})
+
 	return g.Wait()
 }
 
